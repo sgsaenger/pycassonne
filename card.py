@@ -1,14 +1,15 @@
 #!/usr/bin/python2
 class Card(object):
-    def __init__(self,edges,middle=None,bonus=None):
-        #defined clockwise
+    def __init__(self,edges,connections=[],bonus=[]):
         self.edges = self.__evalEdges(edges)
-        self.middle = self.__evalMiddle(middle)
+        self.connections = self._evalConnections(connections)
         self.bonus = self.__evalBonus(bonus)
 
-    __stdareas = ['field','city','road']
-    __midareas = [None,'cloister','city']
-    __bonus = [None,'pennant']
+    __stdareas = ['field','city','road','river']
+    __bonus = [None,'pennant','cloister',
+            'spring','branch','lake',   #river
+            'inn','cathredal' #inns and cathedrals
+            'volcano','pigs']
 
     def __evalEdges(self,edges):
         if len(edges)<4:
@@ -18,29 +19,18 @@ class Card(object):
                 raise ValueError("Invalid edge-type: "+ str(e))
         return tuple(edges)
 
+    def __evalConnections(self,cons):
+        for c in cons:
+            test=[]
+            for i in c:
+                test.append(self.edges[i])
+            if len(set(test))>1:
+                raise ValueError("Only edges of the same type can be connected")
 
-    def __evalMiddle(self,m):
-        if not m in type(self).__midareas:
-            raise ValueError("Invalid middle-type: "+str(m))
-        if m == 'cloister':
-            if 'city' in self.edges:
-                raise ValueError("No Cloisters beside cities!")
-            elif self.edges.count('field')<3:
-                raise ValueError("A maximum of one road may lead to a cloister")
-        elif m == 'city':
-            if self.edges.count('city')<2:
-                raise ValueError("City centers are only possible for cities with\
-                        at least two edges!")
-            elif self.edges.count("city")>2:
-                return None
-        return m
-    
-    def __evalBonus(self,b):
-        if not b in type(self).__bonus:
-            raise ValueError("Invalid bonus property: "+str(b))
-        if b == "pennant" and self.edges.count("city")<2:
-            raise ValueError("Pennant only possible for cities with at least\
-                    two edges!")
+    def __evalBonus(self,bonus):
+        for b in bonus:
+            if not b in type(self).__bonus:
+                raise ValueError("Invalid bonus property: "+str(b))
         return b
 
     def offerPosition(self):
@@ -48,15 +38,3 @@ class Card(object):
 
     def offerFigure(self):
         return set(self.edges+self.m)
-
-    def roadsConnected(self):
-        return self.edges.count('road') == 2
-
-    def cityConnected(self):
-        n = self.edges.count('city')
-        if n == 2:
-            return card.m == 'city'
-        elif n > 2:
-            return True
-        else:
-            return False
